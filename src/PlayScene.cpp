@@ -62,7 +62,7 @@ void PlayScene::start()
 {
 	// Set GUI Title
 	m_guiTitle = "Play Scene";
-
+	 
 	m_buildGrid();
 }
 
@@ -110,7 +110,8 @@ void PlayScene::GUI_Function()
 void PlayScene::m_buildGrid()
 {
 	auto tileSize = Config::TILE_SIZE;
-	
+
+	// add tiles to the grid
 	for (int row = 0; row < Config::ROW_NUM; ++row)
 	{
 		for (int col = 0; col < Config::COL_NUM; ++col)
@@ -118,10 +119,62 @@ void PlayScene::m_buildGrid()
 			Tile* tile = new Tile(); // create empty tile.
 			tile->getTransform()->position = glm::vec2(col * tileSize, row * tileSize);
 			addChild(tile);
+			tile->addLabels();
 			tile->setEnabled(false);
 			m_pGrid.push_back(tile);
 		}
 	}
+
+	// create references for each tile to its neighbours
+	for (int row = 0; row < Config::ROW_NUM; ++row)
+	{
+		for (int col = 0; col < Config::COL_NUM; ++col)
+		{
+			Tile* tile = m_getTile(col, row);
+
+			// top row
+			if (row == 0)
+			{
+				tile->setNeighbourTile(TOP_TILE, nullptr);
+			}
+			else
+			{
+				tile->setNeighbourTile(TOP_TILE, m_getTile(col, row - 1));
+			}
+
+			// right column
+			if (col == Config::COL_NUM - 1)
+			{
+				tile->setNeighbourTile(RIGHT_TILE, nullptr);
+			}
+			else
+			{
+				tile->setNeighbourTile(RIGHT_TILE, m_getTile(col + 1, row));
+			}
+
+			// bottom row
+			if (row == Config::ROW_NUM - 1)
+			{
+				tile->setNeighbourTile(BOTTOM_TILE, nullptr);
+			}
+			else
+			{
+				tile->setNeighbourTile(BOTTOM_TILE, m_getTile(col, row + 1));
+			}
+
+			// left column
+			if (col == 0)
+			{
+				tile->setNeighbourTile(LEFT_TILE, nullptr);
+			}
+			else
+			{
+				tile->setNeighbourTile(LEFT_TILE, m_getTile(col - 1, row));
+			}
+		}
+	}
+
+	std::cout << m_pGrid.size() << std::endl;
 }
 
 void PlayScene::m_setGridEnabled(bool state)
@@ -129,10 +182,16 @@ void PlayScene::m_setGridEnabled(bool state)
 	for (auto tile : m_pGrid)
 	{
 		tile->setEnabled(state);
+		tile->setLabelsEnabled(state);
 	}
 	
 	if (state == false)
 	{
 		SDL_RenderClear(Renderer::Instance()->getRenderer());
 	}
+}
+
+Tile* PlayScene::m_getTile(const int col, const int row)
+{
+	return m_pGrid[(row * Config::COL_NUM) + col];
 }
